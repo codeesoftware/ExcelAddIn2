@@ -65,58 +65,7 @@ public class ExcelOperations : IFileOperations
                 };
                 bodycurrentExchangeRates = client.GetExchangeRates(bodycurrentExchangeRatesRequestParameter);
             }
-            XmlSerializer ser2 = new XmlSerializer(typeof(MNBCurrencyUnits));
-            MNBCurrencyUnits currencyUnits;
-            using (var sr = new StringReader(currenciesUnitResponse.GetCurrencyUnitsResult))
-            using (XmlReader reader = XmlReader.Create(sr))
-            {
-                currencyUnits = (MNBCurrencyUnits)ser2.Deserialize(reader);
-            }
-
-            XmlSerializer ser3 = new XmlSerializer(typeof(MNBExchangeRates));
-            MNBExchangeRates exchangeRates;
-            using (var sr = new StringReader(bodycurrentExchangeRates.GetExchangeRatesResult))
-            using (XmlReader reader = XmlReader.Create(sr))
-            {
-                exchangeRates = (MNBExchangeRates)ser3.Deserialize(reader);
-            }
-
-            DataTable table1 = new DataTable("Arfolyamok");
-            table1.Columns.Add("Dátum/ISO");
-            foreach (string currency in currencies.Currencies)
-            {
-                table1.Columns.Add(currency);
-
-            }
-            var unitDic = new Dictionary<string, int>();
-            DataRow unitRow = table1.NewRow();
-            unitRow[0] = "Egység";
-            for (int i = 1; i < currencyUnits.Units.Length; i++)
-            {
-                var unit = currencyUnits.Units[i];
-                unitRow[i] = unit.Value;
-                unitDic.Add(unit.curr, i + 1);
-            }
-            table1.Rows.Add(unitRow);
-
-
-            for (int i = exchangeRates.Day.Length -1 ; 0 < i ; i--)
-            {
-
-
-                DataRow exchangeRateDayRow = table1.NewRow();
-                MNBExchangeRatesDay day = exchangeRates.Day[i];
-                exchangeRateDayRow[0] = day.date;
-                for (int j = 1; j < day.Rate.Length; j++)
-                {
-                    int columnIndex = unitDic[day.Rate[j].curr];
-                    exchangeRateDayRow[columnIndex] = day.Rate[j].Value;
-                }
-                table1.Rows.Add(exchangeRateDayRow);
-
-            }
-            DataSet set = new DataSet("office");
-            set.Tables.Add(table1);
+            DataSet set = CreateDataSet(currenciesUnitResponse, bodycurrentExchangeRates, currencies);
 
             Export(set);
         }
@@ -127,6 +76,64 @@ public class ExcelOperations : IFileOperations
         }
         return true;
     }
+
+    private DataSet CreateDataSet(GetCurrencyUnitsResponseBody currenciesUnitResponse, GetExchangeRatesResponseBody bodycurrentExchangeRates, MNBCurrencies currencies)
+    {
+        XmlSerializer ser2 = new XmlSerializer(typeof(MNBCurrencyUnits));
+        MNBCurrencyUnits currencyUnits;
+        using (var sr = new StringReader(currenciesUnitResponse.GetCurrencyUnitsResult))
+        using (XmlReader reader = XmlReader.Create(sr))
+        {
+            currencyUnits = (MNBCurrencyUnits)ser2.Deserialize(reader);
+        }
+
+        XmlSerializer ser3 = new XmlSerializer(typeof(MNBExchangeRates));
+        MNBExchangeRates exchangeRates;
+        using (var sr = new StringReader(bodycurrentExchangeRates.GetExchangeRatesResult))
+        using (XmlReader reader = XmlReader.Create(sr))
+        {
+            exchangeRates = (MNBExchangeRates)ser3.Deserialize(reader);
+        }
+
+        DataTable table1 = new DataTable("Arfolyamok");
+        table1.Columns.Add("Dátum/ISO");
+        foreach (string currency in currencies.Currencies)
+        {
+            table1.Columns.Add(currency);
+
+        }
+        var unitDic = new Dictionary<string, int>();
+        DataRow unitRow = table1.NewRow();
+        unitRow[0] = "Egység";
+        for (int i = 1; i < currencyUnits.Units.Length; i++)
+        {
+            var unit = currencyUnits.Units[i];
+            unitRow[i] = unit.Value;
+            unitDic.Add(unit.curr, i + 1);
+        }
+        table1.Rows.Add(unitRow);
+
+
+        for (int i = exchangeRates.Day.Length - 1; 0 < i; i--)
+        {
+
+
+            DataRow exchangeRateDayRow = table1.NewRow();
+            MNBExchangeRatesDay day = exchangeRates.Day[i];
+            exchangeRateDayRow[0] = day.date;
+            for (int j = 1; j < day.Rate.Length; j++)
+            {
+                int columnIndex = unitDic[day.Rate[j].curr];
+                exchangeRateDayRow[columnIndex] = day.Rate[j].Value;
+            }
+            table1.Rows.Add(exchangeRateDayRow);
+
+        }
+        DataSet set = new DataSet("office");
+        set.Tables.Add(table1);
+        return set;
+    }
+
     public bool Open()
     {
         var _excel = new Excel.Application();
