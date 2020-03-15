@@ -131,12 +131,14 @@ public class ExcelOperations : IFileOperations
                 table1.Columns.Add(currency);
 
             }
-
+            var unitDic = new Dictionary<string, int>();
             DataRow unitRow = table1.NewRow();
             unitRow[0] = "Egység";
             for (int i = 1; i < currencyUnits.Units.Length; i++)
             {
-                unitRow[i] = currencyUnits.Units[i].Value;
+                var unit = currencyUnits.Units[i];
+                unitRow[i] = unit.Value;
+                unitDic.Add(unit.curr, i+1);
             }
             table1.Rows.Add(unitRow);
 
@@ -147,8 +149,8 @@ public class ExcelOperations : IFileOperations
                 exchangeRateDayRow[0] = exchangeRateDay.date;
                 for (int i = 1; i < exchangeRateDay.Rate.Length; i++)
                 {
-
-                    exchangeRateDayRow[i] = exchangeRateDay.Rate[i].Value;
+                    int columnIndex = unitDic[exchangeRateDay.Rate[i].curr];
+                    exchangeRateDayRow[columnIndex] = exchangeRateDay.Rate[i].Value;
                 }
                 table1.Rows.Add(exchangeRateDayRow);
 
@@ -156,7 +158,7 @@ public class ExcelOperations : IFileOperations
             DataSet set = new DataSet("office");
             set.Tables.Add(table1);
 
-    //        Export(set);
+          Export(set);
         }
         catch (System.Exception e)
         {
