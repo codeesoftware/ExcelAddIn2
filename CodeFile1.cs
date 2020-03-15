@@ -34,49 +34,6 @@ public class ExcelOperations : IFileOperations
 
     public bool Save()
     {
-        //if (File.Exists(fileNameWithPath))
-        //{
-        //    // Display message box
-        //    var result = MessageBox.Show(string.Format("A letölteni kívánt file már létezik: '{0}', felülírja vagy mentés másként?", fileNameWithPath), "Figyelmeztetés", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
-
-        //    // Process message box results 
-        //    switch (result)
-        //    {
-        //        case DialogResult.Yes:
-
-        //            break;
-        //        case DialogResult.No:
-        //            var a = Interaction.InputBox("Kérlek add meg az új mentés helyét?", "Title", fileNameWithPath);
-
-
-        //            break;
-        //        case DialogResult.Cancel:
-        //        default:
-        //            return false;
-        //    }
-        //    return false;
-        //}
-
-        //var _workBook = ExcelAddIn2.Globals.ThisAddIn.Application.ActiveWorkbook;
-        //var _sheet = _workBook.Worksheets.Add(_workBook.Sheets[_workBook.Sheets.Count], 1);
-        //var _cells = _sheet.Cells;
-        //_sheet.Name = "DataExport";
-
-        //int colCounter = 1;
-        //foreach (DataColumn column in dataTable.Columns)
-        //{
-        //    _cells[1, colCounter] = column.ColumnName;
-        //    int rowCounter = 2;
-        //    foreach (DataRow row in dataTable.Rows)
-        //    {
-
-        //        _cells[rowCounter, colCounter] = row.ItemArray[colCounter - 1].ToString();
-
-        //        rowCounter++;
-        //    }
-        //    colCounter++;
-        //}
-        //_workBook.SaveAs(fileNameWithPath);
         try
         {
             GetCurrenciesResponseBody currenciesResponse = null;
@@ -138,19 +95,22 @@ public class ExcelOperations : IFileOperations
             {
                 var unit = currencyUnits.Units[i];
                 unitRow[i] = unit.Value;
-                unitDic.Add(unit.curr, i+1);
+                unitDic.Add(unit.curr, i + 1);
             }
             table1.Rows.Add(unitRow);
 
-            foreach (MNBExchangeRatesDay exchangeRateDay in exchangeRates.Day)
+
+            for (int i = exchangeRates.Day.Length -1 ; 0 < i ; i--)
             {
 
+
                 DataRow exchangeRateDayRow = table1.NewRow();
-                exchangeRateDayRow[0] = exchangeRateDay.date;
-                for (int i = 1; i < exchangeRateDay.Rate.Length; i++)
+                MNBExchangeRatesDay day = exchangeRates.Day[i];
+                exchangeRateDayRow[0] = day.date;
+                for (int j = 1; j < day.Rate.Length; j++)
                 {
-                    int columnIndex = unitDic[exchangeRateDay.Rate[i].curr];
-                    exchangeRateDayRow[columnIndex] = exchangeRateDay.Rate[i].Value;
+                    int columnIndex = unitDic[day.Rate[j].curr];
+                    exchangeRateDayRow[columnIndex] = day.Rate[j].Value;
                 }
                 table1.Rows.Add(exchangeRateDayRow);
 
@@ -158,7 +118,7 @@ public class ExcelOperations : IFileOperations
             DataSet set = new DataSet("office");
             set.Tables.Add(table1);
 
-          Export(set);
+            Export(set);
         }
         catch (System.Exception e)
         {
@@ -180,15 +140,12 @@ public class ExcelOperations : IFileOperations
 
     void Export(DataSet ds)
     {
-        //Creae an Excel application instance
         Excel.Application excelApp = new Excel.Application();
 
-        //Create an Excel workbook instance and open it from the predefined location
         Excel.Workbook excelWorkBook = excelApp.Workbooks.Add();
 
         foreach (DataTable table in ds.Tables)
         {
-            //Add a new worksheet to workbook with the Datatable name
             Excel.Worksheet excelWorkSheet = excelWorkBook.Sheets.Add();
             excelWorkSheet.Name = table.TableName;
 
